@@ -51,7 +51,8 @@ The data is collected by folking githut project with files "activity.zip".
 
 Unzip the file and save to activitydata.
 
-```{r, echo=TRUE}
+
+```r
 unzip("activity.zip")
 activitydata<-read.csv("activity.csv")
 ```
@@ -59,41 +60,85 @@ activitydata<-read.csv("activity.csv")
 ## What is mean total number of steps taken per day?
 
 Change date from character to date class, summary by date, and take mean.
-```{r, echo=TRUE}
+
+```r
 activitydata$date<-as.Date(activitydata$date,format="%Y-%m-%d")
 sumbydate<-tapply(activitydata$steps,activitydata$date,sum)
 meanperday<-mean(sumbydate,na.rm=T)
 ```
 
 Plot the daily mean in histogram and total mean in red line for exploratory.
-```{r, echo=TRUE}
+
+```r
 barplot(sumbydate)
 abline(h=meanperday,col="red")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
 ## What is the average daily activity pattern?
 
 Calculate steps mean value by interval, then combine with time vector.
-```{r, echo=TRUE}
+
+```r
 dailyactivity<-tapply(activitydata$steps,activitydata$interval,mean,na.rm=T)
 dailypattern<-data.frame("time"=unique(activitydata$interval), 
                          "dailyactivity"=dailyactivity)
 ```
 
 Plot the value by histogram.
-```{r, echo=TRUE}
+
+```r
 plot(dailypattern,type="l",xlim=c(0,2355))
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 ## Imputing missing values
 
 Import library VIM for impute missing values by K-mean.
-```{r, echo=TRUE}
+
+```r
 library(VIM)
+```
+
+```
+## Warning: package 'VIM' was built under R version 4.0.2
+```
+
+```
+## Loading required package: colorspace
+```
+
+```
+## Loading required package: grid
+```
+
+```
+## VIM is ready to use.
+```
+
+```
+## Suggestions and bug-reports can be submitted at: https://github.com/statistikat/VIM/issues
+```
+
+```
+## 
+## Attaching package: 'VIM'
+```
+
+```
+## The following object is masked from 'package:datasets':
+## 
+##     sleep
+```
+
+```r
 actdataimputed<-kNN(activitydata,variable = "steps")
 ```
 
 calculate the mean value to compare with the data with missing values.
-```{r, echo=TRUE}
+
+```r
 sumbydate<-tapply(actdataimputed$steps,actdataimputed$date,sum)
 meanperday<-mean(sumbydate)
 ```
@@ -101,46 +146,87 @@ meanperday<-mean(sumbydate)
 ## Are there differences in activity patterns between weekdays and weekends?
 
 Import library dplyr, tidyr, ggplot2
-```{r, echo=TRUE}
+
+```r
 library(dplyr)
+```
+
+```
+## Warning: package 'dplyr' was built under R version 4.0.2
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(tidyr)
+```
+
+```
+## Warning: package 'tidyr' was built under R version 4.0.2
+```
+
+```r
 library(ggplot2)
 ```
 
 Add column weekday
-```{r, echo=TRUE}
+
+```r
 actdatabyday<-mutate(actdataimputed,day=weekdays(date))
 ```
 
 Create Function to check weekday or weekend
-```{r, echo=TRUE}
+
+```r
 checkfunction<-function(x){ifelse(startsWith(x,"S"),"Weekend","Weekday")}
 ```
 
 Get vector of weekday / weekend info
-```{r, echo=TRUE}
+
+```r
 check<-checkfunction(actdatabyday$day)
 ```
 
 Add column to check weekday or weekend
-```{r, echo=TRUE}
+
+```r
 actdatabyday<-cbind(actdatabyday,check)
 ```
 
 Edit data by interval and Weekday/Weekend
-```{r, echo=TRUE}
+
+```r
 dailyactbycheck<-with(actdatabyday,tapply(steps,list(interval,check),mean))
 ```
 
 Tidy dataframe for plot
-```{r, echo=TRUE}
+
+```r
 patternbyday<-data.frame("time"=unique(actdatabyday$interval), 
                               dailyactbycheck)
 patternbycheck<-gather(patternbyday,"daycheck","step",Weekday:Weekend)
 ```
 
 Plot data
-```{r, echo=TRUE}
+
+```r
 g<-ggplot(patternbycheck,aes(x=time,y=step,color=daycheck))
 g+geom_line()+facet_grid(.~daycheck)
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
